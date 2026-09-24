@@ -14,4 +14,14 @@ int main() {
     }
     cout << test.price << '\n';
     cout << test.quantity << '\n';
+
+    OrderBook book{};
+    std::cout << std::boolalpha << book.empty() << '\n';
+
+    auto first_id = book.submit(Side::Buy, 1025, 10);
+    auto second_id = book.submit(Side::Buy, 1025, 5);
+
+    std::cout << first_id << '\n';
+    std::cout << second_id << '\n';
+    std::cout << book.empty() << '\n';
 }
