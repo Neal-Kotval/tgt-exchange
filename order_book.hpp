@@ -4,9 +4,35 @@
 #include "order.hpp"
 
 #include <cstdint>
+#include <cstddef>
 #include <map>
 #include <deque>
 #include <functional>
+#include <vector>
+
+struct Trade {
+    std::uint64_t buy_order_id;
+    std::uint64_t sell_order_id;
+    std::int64_t price;
+    std::int64_t quantity;
+};
+
+struct SubmitResult {
+    std::uint64_t order_id;
+    std::int64_t remaining_quantity;
+    std::vector<Trade> trades;
+};
+
+struct PriceLevel {
+    std::int64_t price;
+    std::int64_t quantity;
+};
+
+struct BookSnapshot {
+    std::vector<PriceLevel> bids;
+    std::vector<PriceLevel> asks;
+};
+
 
 class OrderBook {
     public:

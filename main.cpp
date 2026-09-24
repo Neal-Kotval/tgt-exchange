@@ -1,4 +1,6 @@
 #include <iostream>
+#include <stdexcept>
+
 #include "order.hpp"
 #include "order_book.hpp"
 
@@ -24,4 +26,12 @@ int main() {
     std::cout << first_id << '\n';
     std::cout << second_id << '\n';
     std::cout << book.empty() << '\n';
+
+    try {
+        book.submit(Side::Buy, 1025, 0);
+    } catch (const std::invalid_argument& error) {
+        std::cout << error.what() << '\n';
+    }
+
+    std::cout << book.submit(Side::Buy, 1025, 1) << '\n';
 }

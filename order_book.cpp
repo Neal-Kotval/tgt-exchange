@@ -13,11 +13,11 @@ uint64_t OrderBook::submit(
     int64_t price,
     int64_t quantity
 ) {
-    if (quantity <= 0) {
-        throw std::invalid_argument("Quantity must be positive");
+    if (price <= 0) {
+        throw std::invalid_argument("Price must be positive");
     }
 
-    if (side != Side::Buy || side != Side::Sell) {
+    if (side != Side::Buy && side != Side::Sell) {
         throw std::invalid_argument("Side must be Buy or Sell");
     }
 
