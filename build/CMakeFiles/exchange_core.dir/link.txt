@@ -1,2 +1,0 @@
-/usr/bin/ar qc libexchange_core.a CMakeFiles/exchange_core.dir/order_book.cpp.o
-/usr/bin/ranlib libexchange_core.a

@@ -1,0 +1,13 @@
+.DS_Store
+build/
+build-*/
+cmake-build-*/
+CMakeCache.txt
+CMakeFiles/
+CTestTestfile.cmake
+cmake_install.cmake
+compile_commands.json
+Makefile
+*.a
+*.o
+order_book

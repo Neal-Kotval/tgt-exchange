@@ -3,7 +3,7 @@
 A C++20 order book for the Trading at Georgia Tech exchange warm-up project. Handles limit orders for one symbol and keeps everything in memory. Written by Neal Kotval
 
 - [x] Matching Engine
-- [ ] Drogon HTTP and WebSocket
+- [x] Drogon HTTP and WebSocket
 
 ## Setup on macOS
 
@@ -21,7 +21,7 @@ With [Homebrew](https://brew.sh/) installed, install CMake:
 brew install cmake
 ```
 
-Drogon is needed for the upcoming server, but not for the current core build:
+Drogon is needed for the server, but not for the core tests:
 
 ```sh
 brew install drogon
@@ -68,6 +68,14 @@ All core checks passed
 
 CTest reports one test because all the checks currently live in one executable.
 
+Run the server:
+
+```sh
+./build/exchange_server
+```
+
+It listens at `127.0.0.1:8080`. Stop it with `Control-C`.
+
 After editing source files, rebuild and test again:
 
 ```sh
@@ -105,6 +113,23 @@ clang++ -std=c++20 -Wall -Wextra -Wpedantic main.cpp order_book.cpp -o build/exa
 Run this after creating `build` with the CMake setup above. The examples are separate from the full core test executable.
 
 
+## API
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `POST` | `/orders` | Submit a limit order |
+| `DELETE` | `/orders/{id}` | Cancel a resting order |
+| `GET` | `/book` | Read the best five levels |
+| WebSocket | `/marketdata` | Receive book and trade updates |
+
+Orders use JSON such as:
+
+```json
+{"side":"buy","price":1025,"quantity":3}
+```
+
+The WebSocket URL is `ws://127.0.0.1:8080/marketdata`.
+
 ## Book operations
 
 - `submit(side, price, quantity)` matches the incoming order and stores any remainder.
@@ -120,8 +145,9 @@ Run this after creating `build` with the CMake setup above. The examples are sep
 | `order_book.hpp` | Book interface and trade/snapshot result types |
 | `order_book.cpp` | Matching, cancellation, and snapshots |
 | `core_tests.cpp` | Core behavior checks, independent of a server |
+| `server.cpp` | Drogon HTTP and WebSocket server |
 | `main.cpp` | Earlier learning examples and basic checks; not part of the CMake build |
-| `CMakeLists.txt` | Builds the core library and test executable |
+| `CMakeLists.txt` | Builds the core library, tests, and server |
 
 ## References
 

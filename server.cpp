@@ -8,8 +8,9 @@
 #include <exception>
 #include <functional>
 #include <memory>
-#include <utility>
+#include <stdexcept>
 #include <string>
+#include <utility>
 
 // web socket code
 
