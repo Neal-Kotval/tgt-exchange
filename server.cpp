@@ -91,6 +91,7 @@ public:
 
     METHOD_LIST_BEGIN
     ADD_METHOD_TO(ExchangeApi::getBook, "/book", drogon::Get);
+    ADD_METHOD_TO(ExchangeApi::postOrder,"/orders",drogon::Post);
     METHOD_LIST_END
 
     void getBook(
@@ -118,6 +119,102 @@ public:
                 }
 
                 callback(response);
+            }
+        );
+    }
+
+    void postOrder(
+        const drogon::HttpRequestPtr& request,
+        std::function<void(const drogon::HttpResponsePtr&)>&& callback
+    ) {
+        
+        //parse the request body as a json
+        const auto json = request->getJsonObject();
+
+        //if body not a json throw
+        if (!json || !json->isObject()) {
+            callback(errorResponse(
+                drogon::k400BadRequest,
+                "Request body must be a JSON object"
+            ));
+            return;
+        }
+
+        //make sure side is in json, and make sure its corresponding val is a string
+        if (!json->isMember("side") ||
+            !(*json)["side"].isString()) {
+            callback(errorResponse(
+                drogon::k400BadRequest,
+                "side must be \"buy\" or \"sell\""
+            ));
+            return;
+        }
+
+        if (!json->isMember("price") ||
+            !(*json)["price"].isInt64()) {
+            callback(errorResponse(
+                drogon::k400BadRequest,
+                "price must be an integer"
+            ));
+            return;
+        }
+
+        if (!json->isMember("quantity") ||
+            !(*json)["quantity"].isInt64()) {
+            callback(errorResponse(
+                drogon::k400BadRequest,
+                "quantity must be an integer"
+            ));
+            return;
+        }
+
+        const std::string side_text = (*json)["side"].asString();
+
+        Side side;
+        if (side_text == "buy") {
+            side = Side::Buy;
+        } else if (side_text == "sell") {
+            side = Side::Sell;
+        } else {
+            callback(errorResponse(
+                drogon::k400BadRequest,
+                "side must be \"buy\" or \"sell\""
+            ));
+            return;
+        }
+
+        const std::int64_t price = (*json)["price"].asInt64();
+        const std::int64_t quantity =
+            (*json)["quantity"].asInt64();
+
+        service_->enqueue(
+            [side,
+            price,
+            quantity,
+            reply = std::move(callback)](OrderBook& book) {
+                try {
+                    const SubmitResult result =
+                        book.submit(side, price, quantity);
+
+                    auto response =
+                        drogon::HttpResponse::newHttpJsonResponse(
+                            submitResultJson(result)
+                        );
+                    response->setStatusCode(drogon::k201Created);
+                    reply(response);
+                } catch (const std::invalid_argument& error) {
+                    reply(errorResponse(
+                        drogon::k400BadRequest,
+                        error.what()
+                    ));
+                } catch (const std::exception& error) {
+                    LOG_ERROR << error.what();
+
+                    reply(errorResponse(
+                        drogon::k500InternalServerError,
+                        "Unable to submit order"
+                    ));
+                }
             }
         );
     }
