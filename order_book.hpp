@@ -9,6 +9,7 @@
 #include <deque>
 #include <functional>
 #include <vector>
+#include <limits>
 
 struct Trade {
     std::uint64_t buy_order_id;
@@ -39,7 +40,10 @@ class OrderBook {
         bool empty() const;
         SubmitResult submit(Side side, std::int64_t price, std::int64_t quantity);
         bool cancel(std::uint64_t order_id);
-        BookSnapshot snapshot(std::size_t depth = 5) const;
+        BookSnapshot snapshot(
+            // just retrieve everything otherwise specified
+            std::size_t depth = std::numeric_limits<std::size_t>::max()
+        ) const;
 
     private:
 

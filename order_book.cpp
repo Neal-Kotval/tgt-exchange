@@ -141,3 +141,48 @@ bool OrderBook::cancel(std::uint64_t order_id) {
 
     return false;
 }
+
+BookSnapshot OrderBook::snapshot(std::size_t depth) const {
+    // return obj
+    BookSnapshot result;
+
+    // loop through bids - price level, deque
+    for (const auto& [price, orders] : bids_) {
+        
+        // optional depth param
+        if (result.bids.size() >= depth) {
+            break;
+        }
+
+        std::int64_t total = 0;
+        for (const Order& order : orders) {
+            if (order.quantity >
+                std::numeric_limits<std::int64_t>::max() - total) {
+                    // make sure quantity of orders in a price level doesnt exceed int 64
+                throw std::overflow_error("Price-level quantity overflow");
+            }
+            total += order.quantity;
+        }
+
+        result.bids.push_back(PriceLevel{price, total});
+    }
+
+    for (const auto& [price, orders] : asks_) {
+        if (result.asks.size() >= depth) {
+            break;
+        }
+
+        std::int64_t total = 0;
+        for (const Order& order : orders) {
+            if (order.quantity >
+                std::numeric_limits<std::int64_t>::max() - total) {
+                throw std::overflow_error("Price-level quantity overflow");
+            }
+            total += order.quantity;
+        }
+
+        result.asks.push_back(PriceLevel{price, total});
+    }
+
+    return result;
+}
