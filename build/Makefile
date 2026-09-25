@@ -152,6 +152,19 @@ core_tests/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/core_tests.dir/build.make CMakeFiles/core_tests.dir/build
 .PHONY : core_tests/fast
 
+#=============================================================================
+# Target rules for targets named exchange_server
+
+# Build rule for target.
+exchange_server: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 exchange_server
+.PHONY : exchange_server
+
+# fast build rule for target.
+exchange_server/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/exchange_server.dir/build.make CMakeFiles/exchange_server.dir/build
+.PHONY : exchange_server/fast
+
 core_tests.o: core_tests.cpp.o
 .PHONY : core_tests.o
 
@@ -200,6 +213,30 @@ order_book.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/exchange_core.dir/build.make CMakeFiles/exchange_core.dir/order_book.cpp.s
 .PHONY : order_book.cpp.s
 
+server.o: server.cpp.o
+.PHONY : server.o
+
+# target to build an object file
+server.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/exchange_server.dir/build.make CMakeFiles/exchange_server.dir/server.cpp.o
+.PHONY : server.cpp.o
+
+server.i: server.cpp.i
+.PHONY : server.i
+
+# target to preprocess a source file
+server.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/exchange_server.dir/build.make CMakeFiles/exchange_server.dir/server.cpp.i
+.PHONY : server.cpp.i
+
+server.s: server.cpp.s
+.PHONY : server.s
+
+# target to generate assembly for a file
+server.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/exchange_server.dir/build.make CMakeFiles/exchange_server.dir/server.cpp.s
+.PHONY : server.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -211,12 +248,16 @@ help:
 	@echo "... test"
 	@echo "... core_tests"
 	@echo "... exchange_core"
+	@echo "... exchange_server"
 	@echo "... core_tests.o"
 	@echo "... core_tests.i"
 	@echo "... core_tests.s"
 	@echo "... order_book.o"
 	@echo "... order_book.i"
 	@echo "... order_book.s"
+	@echo "... server.o"
+	@echo "... server.i"
+	@echo "... server.s"
 .PHONY : help
 
 

@@ -7,11 +7,12 @@
 #include <functional>
 #include <memory>
 #include <utility>
+#include <string>
 
 class ExchangeService {
 public:
     ExchangeService() {
-        worker_.run()
+        worker_.run();
     }
 
     void enqueue(std::function<void(OrderBook&)> work) {
@@ -24,7 +25,7 @@ public:
 private:
     OrderBook book_;
     trantor::EventLoopThread worker_;
-}
+};
 
 // converts a book snapshot to a json for the network
 Json::Value snapshotJson(const BookSnapshot& snapshot) {
@@ -47,6 +48,37 @@ Json::Value snapshotJson(const BookSnapshot& snapshot) {
     }
 
     return json;
+}
+
+Json::Value submitResultJson(const SubmitResult& result) {
+    Json::Value json;
+    json["order_id"] = Json::UInt64(result.order_id);
+    json["remaining_quantity"] = Json::UInt64(result.remaining_quantity);
+    json["trades"] = Json::Value(Json::arrayValue);
+
+    for (const Trade& trade : result.trades) {
+        Json::Value entry;
+        entry["buy_order_id"] = Json::UInt64(trade.buy_order_id);
+        entry["sell_order_id"] = Json::UInt64(trade.sell_order_id);
+        entry["price"] = Json::Int64(trade.price);
+        entry["quantity"] = Json::Int64(trade.quantity);
+        json["trades"].append(entry);
+    }
+
+    return json;
+}
+
+drogon::HttpResponsePtr errorResponse(
+    drogon::HttpStatusCode status,
+    const std::string& message
+) {
+    Json::Value json;
+    json["error"] = message;
+
+    auto response =
+        drogon::HttpResponse::newHttpJsonResponse(json);
+    response->setStatusCode(status);
+    return response;
 }
 
 // exchange api inherited from drogon http controller

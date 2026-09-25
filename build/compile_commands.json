@@ -1,0 +1,20 @@
+[
+{
+  "directory": "/Users/nealkotval/tgt-exchange/build",
+  "command": "/usr/bin/c++  -I/Users/nealkotval/tgt-exchange -std=c++20 -arch arm64 -Wall -Wextra -Wpedantic -o CMakeFiles/exchange_core.dir/order_book.cpp.o -c /Users/nealkotval/tgt-exchange/order_book.cpp",
+  "file": "/Users/nealkotval/tgt-exchange/order_book.cpp",
+  "output": "CMakeFiles/exchange_core.dir/order_book.cpp.o"
+},
+{
+  "directory": "/Users/nealkotval/tgt-exchange/build",
+  "command": "/usr/bin/c++  -I/Users/nealkotval/tgt-exchange -std=c++20 -arch arm64 -Wall -Wextra -Wpedantic -o CMakeFiles/core_tests.dir/core_tests.cpp.o -c /Users/nealkotval/tgt-exchange/core_tests.cpp",
+  "file": "/Users/nealkotval/tgt-exchange/core_tests.cpp",
+  "output": "CMakeFiles/core_tests.dir/core_tests.cpp.o"
+},
+{
+  "directory": "/Users/nealkotval/tgt-exchange/build",
+  "command": "/usr/bin/c++  -I/Users/nealkotval/tgt-exchange -isystem /opt/homebrew/include -isystem /opt/homebrew/opt/jsoncpp/include -std=c++20 -arch arm64 -Wall -Wextra -Wpedantic -o CMakeFiles/exchange_server.dir/server.cpp.o -c /Users/nealkotval/tgt-exchange/server.cpp",
+  "file": "/Users/nealkotval/tgt-exchange/server.cpp",
+  "output": "CMakeFiles/exchange_server.dir/server.cpp.o"
+}
+]
