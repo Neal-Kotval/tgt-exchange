@@ -30,4 +30,5 @@ if(BUILD_SERVER)
     target_compile_options(
         exchange_server PRIVATE -Wall -Wextra -Wpedantic
     )
+
 endif()

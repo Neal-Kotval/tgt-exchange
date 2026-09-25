@@ -1160,4 +1160,8 @@ CMakeFiles/exchange_server.dir/server.cpp.o: \
   /opt/homebrew/include/drogon/IntranetIpFilter.h \
   /opt/homebrew/include/drogon/LocalHostFilter.h \
   /opt/homebrew/include/drogon/IOThreadStorage.h \
-  /opt/homebrew/include/trantor/net/EventLoopThread.h
+  /opt/homebrew/include/trantor/net/EventLoopThread.h \
+  /opt/homebrew/include/drogon/PubSubService.h \
+  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/shared_mutex \
+  /opt/homebrew/include/drogon/WebSocketController.h \
+  /opt/homebrew/include/drogon/WebSocketConnection.h

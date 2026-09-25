@@ -2,6 +2,8 @@
 
 #include <drogon/drogon.h>
 #include <trantor/net/EventLoopThread.h>
+#include <drogon/PubSubService.h>
+#include <drogon/WebSocketController.h>
 
 #include <exception>
 #include <functional>
@@ -9,6 +11,36 @@
 #include <utility>
 #include <string>
 
+// web socket code
+
+struct MarketDataSubscription {
+    drogon::SubscriberID id;
+};
+
+class MarketDataHub {
+public:
+    using MessageHandler = drogon::PubSubService<std::string>::MessageHandler;
+
+    drogon::SubscriberID subscribe(MessageHandler handler) {
+        return publisher_.subscribe(
+            "marketdata",
+            std::move(handler)
+        );
+    }
+
+    void unsubscribe(drogon::SubscriberID id) {
+        publisher_.unsubscribe("marketdata", id);
+    }
+
+    void publish(const std::string& message) {
+        publisher_.publish("marketdata", message);
+    }
+
+private:
+    drogon::PubSubService<std::string> publisher_;
+};
+
+// exchnage service code
 class ExchangeService {
 public:
     ExchangeService() {
@@ -27,10 +59,16 @@ private:
     trantor::EventLoopThread worker_;
 };
 
+// json helpers
+
 // converts a book snapshot to a json for the network
 Json::Value snapshotJson(const BookSnapshot& snapshot) {
+
     Json::Value json;
+    // init bids arr
     json["bids"] = Json::Value(Json::arrayValue);
+
+    // init asks arr
     json["asks"] = Json::Value(Json::arrayValue);
 
     for (const PriceLevel& level : snapshot.bids) {
@@ -53,7 +91,7 @@ Json::Value snapshotJson(const BookSnapshot& snapshot) {
 Json::Value submitResultJson(const SubmitResult& result) {
     Json::Value json;
     json["order_id"] = Json::UInt64(result.order_id);
-    json["remaining_quantity"] = Json::UInt64(result.remaining_quantity);
+    json["remaining_quantity"] = Json::Int64(result.remaining_quantity);
     json["trades"] = Json::Value(Json::arrayValue);
 
     for (const Trade& trade : result.trades) {
@@ -66,6 +104,13 @@ Json::Value submitResultJson(const SubmitResult& result) {
     }
 
     return json;
+}
+
+// json helper for the websocket
+std::string jsonString(const Json::Value& json) {
+    Json::StreamWriterBuilder writer;
+    writer["indentation"] = "";
+    return Json::writeString(writer, json);
 }
 
 drogon::HttpResponsePtr errorResponse(
@@ -81,12 +126,14 @@ drogon::HttpResponsePtr errorResponse(
     return response;
 }
 
-// exchange api inherited from drogon http controller
+// api code
 class ExchangeApi : public drogon::HttpController<ExchangeApi, false> {
 
 public:
-    explicit ExchangeApi(std::shared_ptr<ExchangeService> service)
-        : service_(std::move(service)) {
+    ExchangeApi(
+        std::shared_ptr<ExchangeService> service,
+        std::shared_ptr<MarketDataHub> hub
+    ) : service_(std::move(service)), hub_(std::move(hub)) {
     }
 
     METHOD_LIST_BEGIN
@@ -192,10 +239,26 @@ public:
             [side,
             price,
             quantity,
+            hub = hub_,
             reply = std::move(callback)](OrderBook& book) {
                 try {
                     const SubmitResult result =
                         book.submit(side, price, quantity);
+
+                    Json::Value event;
+                    event["type"] = "snapshot";
+                    event["book"] = snapshotJson(book.snapshot(5));
+                    event["trades"] = Json::Value(Json::arrayValue);
+
+                    for (const Trade& trade : result.trades) {
+                        Json::Value entry;
+                        entry["price"] = Json::Int64(trade.price);
+                        entry["quantity"] = Json::Int64(trade.quantity);
+                        event["trades"].append(entry);
+                    }
+
+                    // tell everyone abt it!
+                    hub->publish(jsonString(event));
 
                     auto response =
                         drogon::HttpResponse::newHttpJsonResponse(
@@ -226,7 +289,9 @@ public:
         std::uint64_t order_id
     ) {
         service_->enqueue(
-            [order_id, reply = std::move(callback)](OrderBook& book) {
+            [order_id,
+            hub = hub_,
+            reply = std::move(callback)](OrderBook& book) {
                 try {
                     if (!book.cancel(order_id)) {
                         reply(errorResponse(
@@ -235,6 +300,14 @@ public:
                         ));
                         return;
                     }
+
+                    Json::Value event;
+                    event["type"] = "snapshot";
+                    event["book"] = snapshotJson(book.snapshot(5));
+                    event["trades"] = Json::Value(Json::arrayValue);
+
+                    // tell everyone abt it!
+                    hub->publish(jsonString(event));
 
                     Json::Value json;
                     json["order_id"] = Json::UInt64(order_id);
@@ -256,13 +329,80 @@ public:
 
 private:
     std::shared_ptr<ExchangeService> service_;
+    std::shared_ptr<MarketDataHub> hub_;
+};
+
+class MarketDataWebSocket : public drogon::WebSocketController<MarketDataWebSocket, false> {
+public:
+    MarketDataWebSocket(
+        std::shared_ptr<ExchangeService> service,
+        std::shared_ptr<MarketDataHub> hub
+    ) : service_(std::move(service)), hub_(std::move(hub)) {}
+
+    WS_PATH_LIST_BEGIN
+    WS_PATH_ADD("/marketdata", drogon::Get);
+    WS_PATH_LIST_END
+
+    void handleNewConnection(
+        const drogon::HttpRequestPtr&,
+        const drogon::WebSocketConnectionPtr& connection
+    ) override {
+        const drogon::SubscriberID id = hub_->subscribe(
+            [connection](
+                const std::string&,
+                const std::string& message
+            ) {
+                connection->send(message);
+            }
+        );
+
+        connection->setContext(
+            std::make_shared<MarketDataSubscription>(MarketDataSubscription{id})
+        );
+
+        service_->enqueue(
+            [connection](OrderBook& book) {
+                Json::Value event;
+                event["type"] = "snapshot";
+                event["book"] = snapshotJson(book.snapshot(5));
+
+                connection->send(jsonString(event));
+            }
+        );
+    }
+
+    void handleConnectionClosed(
+        const drogon::WebSocketConnectionPtr& connection
+    ) override {
+        const auto subscription =
+            connection->getContext<MarketDataSubscription>();
+
+        if (subscription) {
+            hub_->unsubscribe(subscription->id);
+        }
+    }
+
+    void handleNewMessage(
+        const drogon::WebSocketConnectionPtr&,
+        std::string&&,
+        const drogon::WebSocketMessageType&
+    ) override {
+
+    }
+
+private:
+    std::shared_ptr<ExchangeService> service_;
+    std::shared_ptr<MarketDataHub> hub_;
 };
 
 int main() {
     auto service = std::make_shared<ExchangeService>();
-    auto api = std::make_shared<ExchangeApi>(service);
+    auto hub = std::make_shared<MarketDataHub>();
+    auto api = std::make_shared<ExchangeApi>(service, hub);
+    auto market_data = std::make_shared<MarketDataWebSocket>(service, hub);
 
     drogon::app().registerController(api);
+    drogon::app().registerController(market_data);
     drogon::app().addListener("127.0.0.1", 8080);
     drogon::app().setThreadNum(2);
     drogon::app().run();
