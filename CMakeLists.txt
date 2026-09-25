@@ -15,3 +15,18 @@ target_compile_options(core_tests PRIVATE -Wall -Wextra -Wpedantic)
 
 enable_testing()
 add_test(NAME core_tests COMMAND core_tests)
+
+option(BUILD_SERVER "Build the Drogon HTTP server" ON)
+
+if(BUILD_SERVER)
+    find_package(Drogon CONFIG REQUIRED)
+
+    add_executable(exchange_server server.cpp)
+    target_link_libraries(
+        exchange_server
+        PRIVATE exchange_core Drogon::Drogon
+    )
+    target_compile_options(
+        exchange_server PRIVATE -Wall -Wextra -Wpedantic
+    )
+endif()
