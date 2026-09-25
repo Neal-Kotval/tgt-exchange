@@ -1,10 +1,10 @@
-Start testing: Sep 25 17:11 EDT
+Start testing: Sep 25 17:48 EDT
 ----------------------------------------------------------
 1/1 Testing: core_tests
 1/1 Test: core_tests
 Command: "/Users/nealkotval/tgt-exchange/build/core_tests"
 Directory: /Users/nealkotval/tgt-exchange/build
-"core_tests" start time: Sep 25 17:11 EDT
+"core_tests" start time: Sep 25 17:48 EDT
 Output:
 ----------------------------------------------------------
 All core checks passed
@@ -12,8 +12,8 @@ All core checks passed
 Test time =   0.00 sec
 ----------------------------------------------------------
 Test Passed.
-"core_tests" end time: Sep 25 17:11 EDT
+"core_tests" end time: Sep 25 17:48 EDT
 "core_tests" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-End testing: Sep 25 17:11 EDT
+End testing: Sep 25 17:48 EDT

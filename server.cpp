@@ -91,7 +91,8 @@ public:
 
     METHOD_LIST_BEGIN
     ADD_METHOD_TO(ExchangeApi::getBook, "/book", drogon::Get);
-    ADD_METHOD_TO(ExchangeApi::postOrder,"/orders",drogon::Post);
+    ADD_METHOD_TO(ExchangeApi::postOrder,"/orders", drogon::Post);
+    ADD_METHOD_TO(ExchangeApi::deleteOrder, "/orders/{id}", drogon::Delete);
     METHOD_LIST_END
 
     void getBook(
@@ -213,6 +214,40 @@ public:
                     reply(errorResponse(
                         drogon::k500InternalServerError,
                         "Unable to submit order"
+                    ));
+                }
+            }
+        );
+    }
+
+    void deleteOrder(
+        const drogon::HttpRequestPtr&,
+        std::function<void(const drogon::HttpResponsePtr&)>&& callback,
+        std::uint64_t order_id
+    ) {
+        service_->enqueue(
+            [order_id, reply = std::move(callback)](OrderBook& book) {
+                try {
+                    if (!book.cancel(order_id)) {
+                        reply(errorResponse(
+                            drogon::k404NotFound,
+                            "Resting order not found"
+                        ));
+                        return;
+                    }
+
+                    Json::Value json;
+                    json["order_id"] = Json::UInt64(order_id);
+                    json["cancelled"] = true;
+
+                    reply(drogon::HttpResponse::newHttpJsonResponse(json));
+
+                } catch (const std::exception& error) {
+                    LOG_ERROR << error.what();
+
+                    reply(errorResponse(
+                        drogon::k500InternalServerError,
+                        "Unable to cancel order"
                     ));
                 }
             }
