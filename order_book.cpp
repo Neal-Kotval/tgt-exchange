@@ -102,3 +102,42 @@ SubmitResult OrderBook::submit(
     result.remaining_quantity = order.quantity;
     return result;
 }
+
+bool OrderBook::cancel(std::uint64_t order_id) {
+    for (auto level = bids_.begin(); level != bids_.end(); ++level) {
+
+        // get the deque for each level
+        auto& orders = level->second;
+
+        // loop thru the deque
+        for (auto order = orders.begin(); order != orders.end(); ++order) {
+            if (order->id == order_id) {
+                orders.erase(order);
+
+                if (orders.empty()) {
+                    bids_.erase(level);
+                }
+
+                return true;
+            }
+        }
+    }
+
+    for (auto level = asks_.begin(); level != asks_.end(); ++level) {
+        auto& orders = level->second;
+
+        for (auto order = orders.begin(); order != orders.end(); ++order) {
+            if (order->id == order_id) {
+                orders.erase(order);
+
+                if (orders.empty()) {
+                    asks_.erase(level);
+                }
+
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
