@@ -37,7 +37,9 @@ struct BookSnapshot {
 class OrderBook {
     public:
         bool empty() const;
-        std::uint64_t submit(Side side, std::int64_t price, std::int64_t quantity);
+        SubmitResult submit(Side side, std::int64_t price, std::int64_t quantity);
+        bool cancel(std::uint64_t order_id);
+        BookSnapshot snapshot(std::size_t depth = 5) const;
 
     private:
 
